@@ -8,6 +8,6 @@ public class BuildingData : ScriptableObject
 {
     public string id;
     public TileBase tile;
-    public int population;
-    public int powerDelta;
+    public int populationChange;
+    public int powerChange;
 }

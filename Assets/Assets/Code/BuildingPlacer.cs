@@ -9,6 +9,9 @@ public class BuildingPlacer : MonoBehaviour
     public Tilemap buildingMap;
     public TileBase buildingTile;
 
+    public BuildingData buildingData;
+    public CityStats cityStats;
+
     void Update()
     {
         if (!Input.GetMouseButtonDown(0))
@@ -28,7 +31,8 @@ public class BuildingPlacer : MonoBehaviour
         if (buildingMap.HasTile(cell))
             return;
 
-        buildingMap.SetTile(cell, buildingTile);
+        buildingMap.SetTile(cell, buildingData.tile);
+        cityStats.AddBuilding(buildingData);
     }
 }
 

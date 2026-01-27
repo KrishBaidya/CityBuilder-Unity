@@ -413,6 +413,8 @@ MonoBehaviour:
   groundMap: {fileID: 1793005868}
   buildingMap: {fileID: 1703038643}
   buildingTile: {fileID: 11400000, guid: 1b8052924ffecc942958aa539091b914, type: 2}
+  buildingData: {fileID: 11400000, guid: 2810ed087d882d54ab8e9f1164dc285d, type: 2}
+  cityStats: {fileID: 1410388501}
 --- !u!1 &1410388498
 GameObject:
   m_ObjectHideFlags: 0
@@ -422,8 +424,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1410388500}
+  - component: {fileID: 1410388501}
   m_Layer: 0
-  m_Name: CityInput
+  m_Name: GameManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -444,6 +447,20 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1410388501
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1410388498}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ef5dd240b5f9847b571ca45899d3e5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  population: 1
+  power: 100
 --- !u!1 &1703038642
 GameObject:
   m_ObjectHideFlags: 0
