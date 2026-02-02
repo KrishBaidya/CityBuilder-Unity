@@ -141,10 +141,7 @@ public class AutomationServer : MonoBehaviour
     {
         // You'll need to maintain a registry of buildings
         // For now, this returns the current building from BuildingPlacer
-        if (buildingPlacer.buildingData.id == id)
-            return buildingPlacer.buildingData;
-
-        return null;
+        return buildingPlacer.GetBuildingById(id);
     }
 
     void OnApplicationQuit()

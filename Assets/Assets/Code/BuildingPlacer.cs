@@ -7,21 +7,32 @@ public class BuildingPlacer : MonoBehaviour
 {
     public Tilemap groundMap;
     public Tilemap buildingMap;
-    
+
     public BuildingData buildingData; // Current selected building
     public List<BuildingData> availableBuildings; // All buildings
     public CityStats cityStats;
 
     void Update()
     {
-        if (!Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0))
+        {
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3Int cell = groundMap.WorldToCell(mouseWorld);
+            cell.z = 0;
+
+            PlaceBuildingAt(cell, buildingData);
             return;
+        }
 
-        Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Vector3Int cell = groundMap.WorldToCell(mouseWorld);
-        cell.z = 0;
+        if (Input.GetMouseButtonDown(1))
+        {
+            Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            Vector3Int cell = groundMap.WorldToCell(mouseWorld);
+            cell.z = 0;
 
-        PlaceBuildingAt(cell, buildingData);
+            RemoveBuildingAt(cell);
+            return;
+        }
     }
 
     public void PlaceBuildingAt(Vector3Int cell, BuildingData building)
@@ -40,10 +51,29 @@ public class BuildingPlacer : MonoBehaviour
 
         buildingMap.SetTile(cell, building.tile);
         cityStats.AddBuilding(building);
-        
+
         Debug.Log($"Placed {building.id} at {cell}");
     }
-    
+
+    public void RemoveBuildingAt(Vector3Int cell)
+    {
+        if (!groundMap.HasTile(cell))
+        {
+            Debug.LogWarning("No ground tile at position");
+            return;
+        }
+
+        if (!buildingMap.HasTile(cell))
+        {
+            Debug.LogWarning("No building exists at position");
+            return;
+        }
+
+        buildingMap.SetTile(cell, null);
+
+        Debug.Log($"Removed building at {cell}");
+    }
+
     public BuildingData GetBuildingById(string id)
     {
         foreach (var building in availableBuildings)

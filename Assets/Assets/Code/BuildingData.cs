@@ -10,4 +10,5 @@ public class BuildingData : ScriptableObject
     public TileBase tile;
     public int populationChange;
     public int powerChange;
+    public int moneyChange;
 }
