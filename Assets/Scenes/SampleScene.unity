@@ -503,7 +503,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   population: 1
   power: 100
-  money: 0
+  money: 1000
   income: 0
   houseCount: 0
   roadCount: 0
