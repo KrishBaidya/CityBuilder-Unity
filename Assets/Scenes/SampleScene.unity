@@ -269,6 +269,7 @@ GameObject:
   - component: {fileID: 519420032}
   - component: {fileID: 519420031}
   - component: {fileID: 519420029}
+  - component: {fileID: 519420033}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -350,6 +351,25 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &519420033
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 519420028}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c21955823c1620e49b50eddfb8273da5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  minZoom: 2
+  maxZoom: 10
+  zoomSpeed: 2
+  panSpeed: 10
+  minPanLimit: {x: -50, y: -50}
+  maxPanLimit: {x: 50, y: 50}
+  touchZoomSpeed: 0.1
 --- !u!1 &1127931083
 GameObject:
   m_ObjectHideFlags: 0
@@ -361,6 +381,7 @@ GameObject:
   - component: {fileID: 1127931085}
   - component: {fileID: 1127931084}
   - component: {fileID: 1127931086}
+  - component: {fileID: 1127931087}
   m_Layer: 0
   m_Name: Grid
   m_TagString: Untagged
@@ -417,6 +438,24 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2810ed087d882d54ab8e9f1164dc285d, type: 2}
   - {fileID: 11400000, guid: ed143c5ad84847f428b47641a4bc2c37, type: 2}
   cityStats: {fileID: 1410388501}
+--- !u!114 &1127931087
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1127931083}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c56a2276624da97498cf2a5e6272789b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  groundMap: {fileID: 1793005868}
+  grassTile: {fileID: 11400000, guid: 95e3bb75e8554ab4da344e2c280368ff, type: 2}
+  mapWidth: 30
+  mapHeight: 30
+  mapCenter: {x: 0, y: 0}
+  generateOnStart: 1
 --- !u!1 &1410388498
 GameObject:
   m_ObjectHideFlags: 0
@@ -465,6 +504,11 @@ MonoBehaviour:
   population: 1
   power: 100
   money: 0
+  income: 0
+  houseCount: 0
+  roadCount: 0
+  powerPlantCount: 0
+  economicCount: 0
 --- !u!114 &1410388502
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -479,6 +523,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildingPlacer: {fileID: 1127931086}
   cityStats: {fileID: 1410388501}
+  groundGenerator: {fileID: 1127931087}
+  cameraController: {fileID: 519420033}
 --- !u!1 &1703038642
 GameObject:
   m_ObjectHideFlags: 0
