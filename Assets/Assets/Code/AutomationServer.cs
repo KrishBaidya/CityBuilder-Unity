@@ -15,7 +15,7 @@ public class AutomationServer : MonoBehaviour
 
     TcpListener listener;
     Thread serverThread;
-    
+
     // Single command processing at a time
     GameCommand currentCommand = null;
     string currentResponse = null;
@@ -31,12 +31,12 @@ public class AutomationServer : MonoBehaviour
         if (buildingPlacer == null) Debug.LogError("❌ BuildingPlacer not assigned!");
         if (cityStats == null) Debug.LogError("❌ CityStats not assigned!");
         if (groundGenerator == null) Debug.LogWarning("⚠️ GroundGenerator not assigned");
-        
+
         isRunning = true;
         serverThread = new Thread(ServerLoop);
         serverThread.IsBackground = true;
         serverThread.Start();
-        
+
         Debug.Log("🎮 AutomationServer started!");
     }
 
@@ -48,7 +48,7 @@ public class AutomationServer : MonoBehaviour
             if (commandReady && currentCommand != null)
             {
                 Debug.Log($"⚙️ Processing: {currentCommand.action}");
-                
+
                 try
                 {
                     currentResponse = ExecuteCommand(currentCommand);
@@ -58,10 +58,10 @@ public class AutomationServer : MonoBehaviour
                     Debug.LogError($"❌ Error executing command: {e.Message}\n{e.StackTrace}");
                     currentResponse = $"{{\"status\":\"error\",\"message\":\"Exception: {e.Message}\"}}";
                 }
-                
+
                 commandReady = false;
                 responseReady = true;
-                
+
                 Debug.Log($"✅ Response ready: {currentResponse.Substring(0, Math.Min(100, currentResponse.Length))}");
             }
         }
@@ -85,7 +85,7 @@ public class AutomationServer : MonoBehaviour
         {
             TcpClient client = null;
             NetworkStream stream = null;
-            
+
             try
             {
                 // Accept connection
@@ -132,7 +132,9 @@ public class AutomationServer : MonoBehaviour
                         {
                             Debug.Log($"📤 Sending response");
                             SendResponse(stream, currentResponse);
-                            
+
+                            Thread.Sleep(50);
+
                             // Reset
                             currentCommand = null;
                             currentResponse = null;
@@ -140,7 +142,7 @@ public class AutomationServer : MonoBehaviour
                             break;
                         }
                     }
-                    
+
                     Thread.Sleep(10);
                     waited++;
                 }

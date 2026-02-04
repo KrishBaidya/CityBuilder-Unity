@@ -13,31 +13,36 @@ class CityBuilderClient:
         self.map_info = None
         
     def send_command(self, command):
-        """Send a command to Unity and get response"""
-        try:
-            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.settimeout(5)
-            client.connect((self.host, self.port))
-            
-            message = json.dumps(command)
-            print(f"📤 Sending: {message}")
-            client.send(message.encode('utf-8'))
-            
-            response = client.recv(4096).decode('utf-8')
-            client.close()
-            
-            result = json.loads(response)
-            print(f"📥 Response: {result}")
-            return result
-        except socket.timeout:
-            print("❌ Connection timeout - is Unity running?")
-            return {"status": "error", "message": "timeout"}
-        except ConnectionRefusedError:
-            print("❌ Connection refused - make sure Unity game is running on port 5050")
-            return {"status": "error", "message": "connection refused"}
-        except Exception as e:
-            print(f"❌ Error: {e}")
-            return {"status": "error", "message": str(e)}
+        """Send a command to Unity and get response (With Retry)"""
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                client.settimeout(5)
+                client.connect((self.host, self.port))
+                
+                message = json.dumps(command)
+                # print(f"📤 Sending: {message}") # Uncomment for debug
+                client.send(message.encode('utf-8'))
+                
+                response = client.recv(4096).decode('utf-8')
+                client.close()
+                
+                result = json.loads(response)
+                # print(f"📥 Response: {result}") # Uncomment for debug
+                return result
+
+            except (ConnectionRefusedError, socket.timeout) as e:
+                # If Unity is busy processing the previous frame, wait a tiny bit and retry
+                if attempt < max_retries - 1:
+                    time.sleep(0.2)
+                    continue
+                else:
+                    print(f"❌ Connection failed after {max_retries} attempts: {e}")
+                    return {"status": "error", "message": "connection failed"}
+            except Exception as e:
+                print(f"❌ Error: {e}")
+                return {"status": "error", "message": str(e)}
     
     # ==================== BUILDING COMMANDS ====================
     
@@ -45,7 +50,7 @@ class CityBuilderClient:
         """Place a building at coordinates
         
         Args:
-            building_type: "house", "road", "power_plant", or "economic"
+            building_type: "House", "Road", "PowerPlant", or "Economic"
             x: X coordinate
             y: Y coordinate
             reasoning: Optional LLM reasoning text
@@ -224,30 +229,42 @@ def test_connection():
 
 
 def demo_basic_commands():
-    """Demo all basic commands"""
+    """Demo all basic commands with VALID coordinates"""
     print("\n" + "=" * 60)
-    print("🎮 BASIC COMMANDS DEMO")
+    print("🎮 BASIC COMMANDS DEMO (FIXED)")
     print("=" * 60)
     
     city = CityBuilderClient()
     
     print("\n📍 Step 1: Get map info")
-    city.get_map_info()
-    time.sleep(0.5)
+    map_info = city.get_map_info()
+    
+    if map_info.get("status") != "success":
+        print("❌ Failed to get map info. Is Unity running?")
+        return
+
+    # USE DYNAMIC COORDINATES (Center of the map)
+    cx = map_info['centerX']
+    cy = map_info['centerY']
+    print(f"🎯 Target Coordinates: ({cx}, {cy})")
     
     print("\n📊 Step 2: Get initial stats")
     city.get_stats()
     time.sleep(0.5)
     
     print("\n🏗️  Step 3: Place some buildings")
-    city.place_building("power_plant", 25, 25, "Central power hub")
-    time.sleep(0.3)
-    city.place_building("house", 26, 25, "Residential area")
-    time.sleep(0.3)
-    city.place_building("road", 27, 25, "Connect buildings")
-    time.sleep(0.3)
-    city.place_building("economic", 28, 25, "Generate income")
+    # Using cx, cy ensures we are always inside the generated map
+    city.place_building("PowerPlant", cx, cy, "Central power hub")
+    time.sleep(0.5) # Increased sleep slightly to prevent socket exhaustion
+    
+    city.place_building("House", cx + 1, cy, "Residential area")
     time.sleep(0.5)
+    
+    city.place_building("Road", cx + 2, cy, "Connect buildings")
+    time.sleep(0.5)
+    
+    city.place_building("Economic", cx + 3, cy, "Generate income")
+    time.sleep(1.0) # Wait for Unity to update physics/logic
     
     print("\n📊 Step 4: Check stats after building")
     city.get_stats()
@@ -258,22 +275,17 @@ def demo_basic_commands():
     time.sleep(0.5)
     
     print("\n⬆️  Step 6: Upgrade a building")
-    city.upgrade(25, 25, 2)
-    time.sleep(0.3)
-    city.get_stats()
+    city.upgrade(cx, cy, 2) # Upgrade the power plant we placed at center
     time.sleep(0.5)
     
     print("\n💥 Step 7: Demolish a building")
-    city.demolish(27, 25)
-    time.sleep(0.3)
-    city.get_stats()
+    city.demolish(cx + 2, cy) # Demolish the road
     time.sleep(0.5)
     
     print("\n📷 Step 8: Focus camera")
-    city.focus_camera(25, 25, 3)
+    city.focus_camera(cx, cy, 3)
     
     print("\n✅ Demo complete!")
-
 
 def demo_city_planning():
     """Demo strategic city planning"""
@@ -292,9 +304,9 @@ def demo_city_planning():
     city.focus_camera(center_x, center_y, 8)
     time.sleep(0.5)
     
-    city.place_building("power_plant", center_x, center_y, "Main power plant")
+    city.place_building("PowerPlant", center_x, center_y, "Main power plant")
     time.sleep(0.2)
-    city.place_building("power_plant", center_x + 10, center_y, "Backup power")
+    city.place_building("PowerPlant", center_x + 10, center_y, "Backup power")
     time.sleep(0.5)
     
     print("\n🛣️  Phase 2: Road Network")
@@ -318,7 +330,7 @@ def demo_city_planning():
     ]
     
     for i, (x, y) in enumerate(positions):
-        city.place_building("house", x, y, f"Residential building {i+1}")
+        city.place_building("House", x, y, f"Residential building {i+1}")
         time.sleep(0.2)
     
     city.get_stats()
@@ -352,7 +364,7 @@ def demo_random_city(num_buildings=20):
     city = CityBuilderClient()
     city.get_map_info()
     
-    building_types = ["house", "road", "power_plant", "economic"]
+    building_types = ["House", "road", "PowerPlant", "economic"]
     weights = [40, 30, 15, 15]  # Probability weights
     
     placed = 0
@@ -391,7 +403,7 @@ def demo_with_llm_reasoning():
     # LLM-style actions with detailed reasoning
     actions = [
         {
-            "type": "power_plant",
+            "type": "PowerPlant",
             "x": 25,
             "y": 25,
             "reasoning": "Establishing central power infrastructure as foundation for city growth. Strategic placement allows equal distribution to all quadrants."
@@ -409,7 +421,7 @@ def demo_with_llm_reasoning():
             "reasoning": "Extending road network north to create grid pattern for efficient city layout."
         },
         {
-            "type": "house",
+            "type": "House",
             "x": 26,
             "y": 26,
             "reasoning": "Placing residential unit near power and roads to maximize infrastructure efficiency and minimize power loss."
@@ -421,13 +433,13 @@ def demo_with_llm_reasoning():
             "reasoning": "Building economic center adjacent to residential area to generate income while utilizing existing power grid."
         },
         {
-            "type": "house",
+            "type": "House",
             "x": 26,
             "y": 27,
             "reasoning": "Expanding residential capacity to increase population and city growth potential."
         },
         {
-            "type": "power_plant",
+            "type": "PowerPlant",
             "x": 30,
             "y": 30,
             "reasoning": "Adding secondary power plant in eastern quadrant to support future expansion and provide power redundancy."
@@ -463,7 +475,7 @@ def interactive_mode():
     print("🎮 INTERACTIVE MODE")
     print("=" * 60)
     print("\nCommands:")
-    print("  place <type> <x> <y>  - Place building (house/road/power_plant/economic)")
+    print("  place <type> <x> <y>  - Place building (House/road/PowerPlant/economic)")
     print("  demolish <x> <y>      - Demolish building")
     print("  upgrade <x> <y> <lvl> - Upgrade building")
     print("  stats                 - Show city stats")
