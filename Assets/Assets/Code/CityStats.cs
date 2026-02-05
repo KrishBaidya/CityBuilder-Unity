@@ -44,16 +44,16 @@ public class CityStats : MonoBehaviour
     {
         switch (id)
         {
-            case "house":
+            case "House":
                 houseCount += change;
                 break;
-            case "road":
+            case "Road":
                 roadCount += change;
                 break;
-            case "power_plant":
+            case "PowerPlant":
                 powerPlantCount += change;
                 break;
-            case "economic":
+            case "Economic":
                 economicCount += change;
                 break;
         }
