@@ -197,37 +197,67 @@ public class AutomationServer : MonoBehaviour
         }
     }
 
-    string PlaceBuilding(GameCommand cmd)
+    string PlaceBuilding(GameCommand command)
     {
-        if (buildingPlacer == null)
-            return "{\"status\":\"error\",\"message\":\"BuildingPlacer null\"}";
-
-        if (groundGenerator != null && !groundGenerator.IsValidPosition(cmd.x, cmd.y))
+        // Validate position
+        if (groundGenerator != null && !groundGenerator.IsValidPosition(command.x, command.y))
         {
             MapInfo info = groundGenerator.GetMapInfo();
-            return $"{{\"status\":\"error\",\"message\":\"Out of bounds. Valid X({info.minX} to {info.maxX}) Y({info.minY} to {info.maxY})\"}}";
+            return $"{{\"status\":\"error\",\"message\":\"Position out of bounds. Valid X({info.minX} to {info.maxX}) Y({info.minY} to {info.maxY})\"}}";
         }
 
-        Vector3Int cell = new(cmd.x, cmd.y, 0);
+        Vector3Int cell = new(command.x, command.y, 0);
 
         if (!buildingPlacer.groundMap.HasTile(cell))
-            return $"{{\"status\":\"error\",\"message\":\"No ground at ({cmd.x},{cmd.y})\"}}";
+        {
+            return $"{{\"status\":\"error\",\"message\":\"No ground at ({command.x},{command.y})\"}}";
+        }
 
         if (buildingPlacer.buildingMap.HasTile(cell))
-            return $"{{\"status\":\"error\",\"message\":\"Building exists\"}}";
+        {
+            return $"{{\"status\":\"error\",\"message\":\"Building exists at ({command.x},{command.y})\"}}";
+        }
 
-        BuildingData building = buildingPlacer.GetBuildingById(cmd.buildingType);
+        BuildingData building = buildingPlacer.GetBuildingById(command.buildingType);
         if (building == null)
-            return $"{{\"status\":\"error\",\"message\":\"Building '{cmd.buildingType}' not found\"}}";
+        {
+            return $"{{\"status\":\"error\",\"message\":\"Building '{command.buildingType}' not found\"}}";
+        }
 
         if (cityStats.money < building.cost)
-            return $"{{\"status\":\"error\",\"message\":\"Not enough money. Need ${building.cost}\"}}";
+        {
+            return $"{{\"status\":\"error\",\"message\":\"Not enough money. Need ${building.cost}, have ${cityStats.money}\"}}";
+        }
 
+        // Check road requirement
+        if (building.requiresRoadAccess && !buildingPlacer.HasRoadAccess(cell))
+        {
+            return $"{{\"status\":\"error\",\"message\":\"{building.id} requires road access! Build a road adjacent to ({command.x},{command.y}) first.\"}}";
+        }
+
+        // Place building
         buildingPlacer.buildingMap.SetTile(cell, building.tile);
-        cityStats.AddBuilding(building);
         cityStats.money -= building.cost;
+        cityStats.AddBuilding(building);
 
-        return $"{{\"status\":\"success\",\"message\":\"Placed {cmd.buildingType} at ({cmd.x},{cmd.y})\",\"cost\":{building.cost}}}";
+        // Check for road bonus
+        bool hasRoadBonus = building.id != "road" && buildingPlacer.HasRoadAccess(cell);
+        if (hasRoadBonus)
+        {
+            if (building.roadBonusIncome > 0)
+            {
+                cityStats.income += building.roadBonusIncome;
+            }
+            if (building.roadBonusPopulation > 0)
+            {
+                cityStats.population += building.roadBonusPopulation;
+            }
+        }
+
+        string bonusInfo = hasRoadBonus ? $",\"roadBonus\":true,\"bonusIncome\":{building.roadBonusIncome},\"bonusPopulation\":{building.roadBonusPopulation}" : "";
+
+        Debug.Log($"✅ Placed {command.buildingType} at ({command.x},{command.y})");
+        return $"{{\"status\":\"success\",\"message\":\"Placed {command.buildingType} at ({command.x},{command.y})\",\"cost\":{building.cost}{bonusInfo}}}";
     }
 
     string DemolishBuilding(GameCommand cmd)

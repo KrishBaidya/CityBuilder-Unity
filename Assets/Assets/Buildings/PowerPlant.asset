@@ -13,7 +13,12 @@ MonoBehaviour:
   m_Name: PowerPlant
   m_EditorClassIdentifier: 
   id: PowerPlant
-  tile: {fileID: 11400000, guid: 1b8052924ffecc942958aa539091b914, type: 2}
+  tile: {fileID: 11400000, guid: b13ae240cde9334498e456789e107e7b, type: 2}
+  cost: 500
   populationChange: 0
-  powerChange: 100
+  powerChange: 50
   moneyChange: -100
+  incomeChange: 0
+  requiresRoadAccess: 0
+  roadBonusIncome: 0
+  roadBonusPopulation: 0

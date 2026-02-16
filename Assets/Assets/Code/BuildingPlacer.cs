@@ -1,20 +1,18 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 public class BuildingPlacer : MonoBehaviour
 {
     public Tilemap groundMap;
     public Tilemap buildingMap;
 
-    public BuildingData buildingData; // Current selected building
-    public List<BuildingData> availableBuildings; // All buildings
+    public BuildingData buildingData;
+    public List<BuildingData> availableBuildings;
     public CityStats cityStats;
 
     void Update()
     {
-        // Left click - place building
         if (Input.GetMouseButtonDown(0))
         {
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -25,7 +23,6 @@ public class BuildingPlacer : MonoBehaviour
             return;
         }
 
-        // Right click - remove building
         if (Input.GetMouseButtonDown(1))
         {
             Vector3 mouseWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -50,17 +47,32 @@ public class BuildingPlacer : MonoBehaviour
             Debug.LogWarning("Building already exists at position");
             return;
         }
-        
-        // Check if player has enough money
+
         if (cityStats.money < building.cost)
         {
             Debug.LogWarning($"Not enough money! Need ${building.cost}, have ${cityStats.money}");
             return;
         }
 
+        // Check road requirement
+        if (building.requiresRoadAccess && !HasRoadAccess(cell))
+        {
+            Debug.LogWarning($"{building.id} requires road access! Build a road nearby first.");
+            return;
+        }
+
+        // Place building
         buildingMap.SetTile(cell, building.tile);
+        cityStats.money -= building.cost;
+        
+        // Add base stats
         cityStats.AddBuilding(building);
-        cityStats.money -= building.cost; // Deduct cost
+        
+        // Apply road bonuses if connected
+        if (building.id != "road" && HasRoadAccess(cell))
+        {
+            ApplyRoadBonus(building, cell);
+        }
 
         Debug.Log($"✅ Placed {building.id} at {cell} for ${building.cost}");
     }
@@ -79,7 +91,6 @@ public class BuildingPlacer : MonoBehaviour
             return;
         }
 
-        // Get the building data before removing
         var tile = buildingMap.GetTile(cell);
         BuildingData building = null;
 
@@ -92,23 +103,82 @@ public class BuildingPlacer : MonoBehaviour
             }
         }
 
-        // Remove the tile
         buildingMap.SetTile(cell, null);
 
-        // Update stats if we found the building data
         if (building != null)
         {
             cityStats.RemoveBuilding(building);
             
-            // Refund 50% of cost
+            // Remove road bonus if it had one
+            if (HasRoadAccess(cell))
+            {
+                RemoveRoadBonus(building, cell);
+            }
+            
             int refund = building.cost / 2;
             cityStats.money += refund;
             
             Debug.Log($"💥 Removed {building.id} at {cell}, refunded ${refund}");
         }
-        else
+    }
+
+    // Check if a position has road access (road in adjacent tiles)
+    public bool HasRoadAccess(Vector3Int position)
+    {
+        // Check all 4 adjacent tiles (up, down, left, right)
+        Vector3Int[] adjacentTiles = new Vector3Int[]
         {
-            Debug.Log($"💥 Removed unknown building at {cell}");
+            position + Vector3Int.up,
+            position + Vector3Int.down,
+            position + Vector3Int.left,
+            position + Vector3Int.right
+        };
+
+        foreach (var adjacentPos in adjacentTiles)
+        {
+            if (buildingMap.HasTile(adjacentPos))
+            {
+                var tile = buildingMap.GetTile(adjacentPos);
+                
+                // Check if this tile is a road
+                foreach (var b in availableBuildings)
+                {
+                    if (b.tile == tile && b.id == "road")
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    void ApplyRoadBonus(BuildingData building, Vector3Int position)
+    {
+        if (building.roadBonusIncome > 0)
+        {
+            cityStats.income += building.roadBonusIncome;
+            Debug.Log($"🛣️ Road bonus! +${building.roadBonusIncome} income for {building.id}");
+        }
+
+        if (building.roadBonusPopulation > 0)
+        {
+            cityStats.population += building.roadBonusPopulation;
+            Debug.Log($"🛣️ Road bonus! +{building.roadBonusPopulation} population for {building.id}");
+        }
+    }
+
+    void RemoveRoadBonus(BuildingData building, Vector3Int position)
+    {
+        if (building.roadBonusIncome > 0)
+        {
+            cityStats.income -= building.roadBonusIncome;
+        }
+
+        if (building.roadBonusPopulation > 0)
+        {
+            cityStats.population -= building.roadBonusPopulation;
         }
     }
 

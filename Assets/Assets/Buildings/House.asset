@@ -14,6 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   id: House
   tile: {fileID: 11400000, guid: 3cca11cabdd40714b94b006a20f6599d, type: 2}
+  cost: 100
   populationChange: 10
-  powerChange: -10
+  powerChange: -2
   moneyChange: -100
+  incomeChange: 0
+  requiresRoadAccess: 0
+  roadBonusIncome: 0
+  roadBonusPopulation: 5
